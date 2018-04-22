@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitorWrappe
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.ContextualSerializer;
 import com.fasterxml.jackson.databind.ser.impl.PropertySerializerMap;
+import com.google.common.collect.ImmutableMap;
 
 import org.hibernate.engine.spi.Mapping;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -192,9 +193,7 @@ public class HibernateProxySerializer
                     }
                 }
         		final Object idValue = init.getIdentifier();
-        		HashMap<String, Object> map = new HashMap<String, Object>();
-        		map.put(idName, idValue);
-        		return map;
+        		return ImmutableMap.of("type", init.getEntityName(), idName, idValue);
             }
             return null;
         }
