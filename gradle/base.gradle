@@ -1,0 +1,17 @@
+repositories {
+	//mavenLocal()
+   	maven { url 'https://artifactory.aspex.com/artifactory/libs-release'}
+	maven { url 'https://dl.bintray.com/cognodyne/maven' }
+}
+
+def gitVersion = {
+    return "git describe --dirty".execute().in.text.toString().trim()
+}
+
+version=gitVersion()
+
+task printVersion {
+	doLast {
+		println "version=$version"
+	}
+}

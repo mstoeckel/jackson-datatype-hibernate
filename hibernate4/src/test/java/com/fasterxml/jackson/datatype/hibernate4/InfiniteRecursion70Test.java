@@ -23,7 +23,8 @@ public class InfiniteRecursion70Test extends BaseTest
              
              final Contrato contrato1 = em.find(Contrato.class, 1L);
              Hibernate.initialize(contrato1.getParcelas());
-             Hibernate.initialize(contrato1.getLiquidacoes());             
+             Hibernate.initialize(contrato1.getLiquidacoes());   
+             //System.out.println(mapper.writeValueAsString(contrato1));
              assertEquals(expected, mapper.writeValueAsString(contrato1));
 
              em.clear();
@@ -31,6 +32,7 @@ public class InfiniteRecursion70Test extends BaseTest
              final Contrato contrato2 = em.find(Contrato.class, 1L);
              Hibernate.initialize(contrato2.getLiquidacoes());
              Hibernate.initialize(contrato2.getParcelas());
+             //System.out.println(mapper.writeValueAsString(contrato2));
              assertEquals(expected, mapper.writeValueAsString(contrato2)); 
          } finally {
              try {

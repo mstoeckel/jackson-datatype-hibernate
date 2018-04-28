@@ -1,0 +1,22 @@
+buildscript {
+    repositories {
+    		maven { url 'https://artifactory.aspex.com/artifactory/plugin-release'}
+        	dependencies {
+    		}
+    }
+}
+subprojects {
+	apply from: "${rootDir}/gradle/base.gradle"
+	apply from: "${rootDir}/gradle/java.gradle"
+	apply from: "${rootDir}/gradle/publish.gradle"
+	
+	dependencies {
+		api "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+		api "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+		api "org.slf4j:slf4j-api:$slf4jVersion"
+		api "com.google.guava:guava:$guavaVersion"
+		
+		testCompile "junit:junit:$junitVersion"
+		testCompile "com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion"
+	}
+}

@@ -1,0 +1,5 @@
+rootProject.name = 'jackson-datatype-hibernate'
+
+include 'hibernate3'
+include 'hibernate4'
+include 'hibernate5'
