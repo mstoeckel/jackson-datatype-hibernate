@@ -8,3 +8,4 @@ dependencies {
 	testCompile 	"com.h2database:h2:$h2Version"
 	testCompile		"org.mockito:mockito-core:$mockitoVersion"
 }
+publishing.publications.maven.artifactId 'jackson-datatype-hibernate5'
