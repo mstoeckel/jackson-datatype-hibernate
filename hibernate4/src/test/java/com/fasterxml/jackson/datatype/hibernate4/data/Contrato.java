@@ -17,10 +17,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity @Table(name="Contrato", catalog="classicmodels")
 public class Contrato {
     @Id
-    public Long id;
+    private Long id;
 
     @Column(name="numero_contrato")
-    public String numeroContrato;
+    private String numeroContrato;
 
     @OneToMany(mappedBy="contrato") @JsonIgnoreProperties("contrato")
     private List<Parcela> parcelas;

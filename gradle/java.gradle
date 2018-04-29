@@ -1,0 +1,18 @@
+apply plugin: 'java-library'
+apply plugin: 'eclipse'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+eclipse.classpath.defaultOutputDir = file('.ecbuild')
+
+import org.apache.tools.ant.filters.ReplaceTokens
+processResources {
+    filesMatching('package-version.properties') {
+        filter ReplaceTokens, tokens: [
+			version: project.version,
+			group: project.group,
+			artifactId: project.name
+		]
+    }
+}
