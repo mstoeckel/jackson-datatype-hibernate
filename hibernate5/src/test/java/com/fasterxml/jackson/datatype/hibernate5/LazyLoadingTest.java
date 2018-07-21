@@ -75,7 +75,7 @@ public class LazyLoadingTest extends BaseTest
     		
 			String json = objectMapper.writeValueAsString(customerRef);
 			assertFalse(Hibernate.isInitialized(customerRef));
-			assertEquals("{\"customerNumber\":103}", json);
+			assertEquals("{\"type\":\"com.fasterxml.jackson.datatype.hibernate5.data.Customer\",\"customerNumber\":103}", json);
     	} finally {
     		emf.close();
     	}

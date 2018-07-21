@@ -2,6 +2,8 @@ package com.fasterxml.jackson.datatype.hibernate5;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.persistence.*;
 
@@ -14,15 +16,19 @@ import com.fasterxml.jackson.databind.ser.ContextualSerializer;
 import com.fasterxml.jackson.databind.ser.ResolvableSerializer;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module.Feature;
+import com.google.common.collect.ImmutableMap;
 
-import org.hibernate.FlushMode;
-import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.collection.internal.AbstractPersistentCollection;
+import org.hibernate.collection.internal.PersistentArrayHolder;
+import org.hibernate.collection.internal.PersistentBag;
+import org.hibernate.collection.internal.PersistentIdentifierBag;
+import org.hibernate.collection.internal.PersistentList;
+import org.hibernate.collection.internal.PersistentMap;
+import org.hibernate.collection.internal.PersistentSet;
 import org.hibernate.collection.spi.PersistentCollection;
-import org.hibernate.engine.spi.PersistenceContext;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.mapping.Bag;
 
 /**
@@ -282,57 +288,50 @@ public class PersistentCollectionSerializer
         return null;
     }
     
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected Object findLazyValue(PersistentCollection coll) {
-        // If lazy-loaded, not yet loaded, may serialize as null?
-        if (!Feature.FORCE_LAZY_LOADING.enabledIn(_features) && !coll.wasInitialized()) {
-            return null;
+        if (coll.wasInitialized()) {
+            return coll.getValue();
         }
-        if (_sessionFactory != null) {
-            // 08-Feb-2017, tatu: and not closing this is not problematic... ?
-            Session session = openTemporarySessionForLoading(coll);
-            initializeCollection(coll, session);
+        if (Feature.FORCE_LAZY_LOADING.enabledIn(_features)) {
+            coll.forceInitialization();
+            return coll.getValue();
         }
-        return coll.getValue();
+        if (Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS.enabledIn(_features)) {
+            SharedSessionContractImplementor sessionImpl = ((AbstractPersistentCollection) coll).getSession();
+            Iterable iterable = getIterable(coll);
+            if (iterable != null) {
+                return StreamSupport.stream(iterable.spliterator(), false)//
+                        .map(o -> {
+                            String entityName = sessionImpl.bestGuessEntityName(o);
+                            return ImmutableMap.of("type", entityName, sessionImpl.getFactory().getIdentifierPropertyName(entityName), sessionImpl.getContextEntityIdentifier(o));
+                        }).collect(Collectors.toList());
+            }
+        }
+        return null;
     }
-
-    // Most of the code bellow is from Hibernate AbstractPersistentCollection
-    private Session openTemporarySessionForLoading(PersistentCollection coll) {
-
-        final SessionFactory sf = _sessionFactory;
-        final Session session = sf.openSession();
-
-        PersistenceContext persistenceContext = ((SessionImplementor) session).getPersistenceContext();
-        persistenceContext.setDefaultReadOnly(true);
-        session.setFlushMode(FlushMode.MANUAL);
-
-        persistenceContext.addUninitializedDetachedCollection(
-                ((SessionFactoryImplementor) _sessionFactory).getCollectionPersister(coll.getRole()),
-                coll
-        );
-
-        return session;
-    }
-
-    private void initializeCollection(PersistentCollection coll, Session session) {
-
-//        boolean isJTA = ((SessionImplementor) session).getTransactionCoordinator()
-//                .getTransactionContext().getTransactionEnvironment()
-//                .getTransactionFactory()
-//                .compatibleWithJtaSynchronization();
-        //Above is removed after Hibernate 5
-        boolean isJTA = SessionReader.isJTA(session);
-
-        if (!isJTA) {
-            session.beginTransaction();
+    
+    @SuppressWarnings("unchecked")
+    private Iterable<?> getIterable(PersistentCollection coll) {
+        if (coll instanceof PersistentArrayHolder) {
+            return () -> ((PersistentArrayHolder) coll).elements();
         }
-
-        coll.setCurrentSession(((SessionImplementor) session));
-        Hibernate.initialize(coll);
-
-        if (!isJTA) {
-            session.getTransaction().commit();
+        if (coll instanceof PersistentBag) {
+            return () -> ((PersistentBag)coll).iterator();
         }
-        session.close();
+        if (coll instanceof PersistentIdentifierBag) {
+            return () -> ((PersistentIdentifierBag)coll).iterator();
+        }
+        if (coll instanceof PersistentList) {
+            return () -> ((PersistentList)coll).iterator();
+        }
+        if (coll instanceof PersistentSet) {
+            return () -> ((PersistentSet)coll).iterator();
+        }
+        if (coll instanceof PersistentMap) {
+            return null;//we don't support it for now
+        }
+        return null;
     }
 
     /**

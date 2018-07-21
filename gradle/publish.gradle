@@ -1,0 +1,34 @@
+apply plugin: 'maven-publish'
+
+task sourcesJar(type: Jar) {
+	classifier = 'sources'
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar, javadocJar
+}
+
+publishing {
+	repositories {
+		maven {
+			credentials {
+				username "$artifactory_user"
+				password "$artifactory_password"
+			}
+			url "https://artifactory.aspex.com/artifactory/libs-release-local"
+		}
+	}
+	publications {
+		maven(MavenPublication) {
+			from components.java
+			artifact sourcesJar
+			artifact javadocJar 
+		}
+	}
+}
