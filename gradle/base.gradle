@@ -1,5 +1,6 @@
 repositories {
 	//mavenLocal()
+	jcenter()
    	maven { url 'https://artifactory.aspex.com/artifactory/libs-release'}
 	maven { url 'https://dl.bintray.com/cognodyne/maven' }
 }
@@ -9,6 +10,7 @@ def gitVersion = {
 }
 
 version=gitVersion()
+//version = '2.9.6'
 
 task printVersion {
 	doLast {
