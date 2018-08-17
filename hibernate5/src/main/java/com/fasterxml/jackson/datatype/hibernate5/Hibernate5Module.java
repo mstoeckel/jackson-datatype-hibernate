@@ -162,7 +162,7 @@ public class Hibernate5Module extends Module
             context.appendAnnotationIntrospector(ai);
         }
         context.addSerializers(new HibernateSerializers(_mapping, _moduleFeatures));
-        context.addBeanSerializerModifier(new HibernateSerializerModifier(_moduleFeatures, _sessionFactory));
+        context.addBeanSerializerModifier(new HibernateSerializerModifier(_mapping, _moduleFeatures, _sessionFactory));
     }
 
     /**
