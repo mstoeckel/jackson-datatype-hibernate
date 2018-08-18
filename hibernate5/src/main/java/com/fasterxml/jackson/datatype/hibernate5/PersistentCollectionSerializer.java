@@ -38,7 +38,6 @@ import org.hibernate.proxy.LazyInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.JavaType;
@@ -314,9 +313,7 @@ public class PersistentCollectionSerializer extends ContainerSerializer<Object> 
         try {
             final Object obj = o.getClass().newInstance();
             Object idValue = ReflectionUtil.getFieldValue(o, idName);
-            logger.debug("idValue:{}", idValue);
             ReflectionUtil.setFieldValue(obj, idName, idValue);
-            logger.debug("returning minimal object entity:{}", obj);
             return obj;
         } catch (InstantiationException | IllegalAccessException | SecurityException e) {
             logger.error("Unable to find proxied", e);
@@ -324,24 +321,20 @@ public class PersistentCollectionSerializer extends ContainerSerializer<Object> 
         }
     }
 
+    @SuppressWarnings("deprecation")
     private String findIdName(Class<?> cls) {
-        logger.debug("findName called for {}", cls);
         if (_sessionFactory != null) {
             return _sessionFactory.getSessionFactory().getIdentifierPropertyName(cls.getName());
         }
-        logger.debug("checking fields...");
         for (Field field : cls.getDeclaredFields()) {
             for (Annotation anno : field.getDeclaredAnnotations()) {
-                logger.debug("anno:{}", anno);
                 if (anno.annotationType().getName().equals("javax.persistence.Id")) {
                     return field.getName();
                 }
             }
         }
-        logger.debug("checking methods...");
         for (Method method : cls.getDeclaredMethods()) {
             for (Annotation anno : method.getDeclaredAnnotations()) {
-                logger.debug("anno:{}", anno.annotationType().getName());
                 if (anno.annotationType().getName().equals("javax.persistence.Id")) {
                     return getPropertyName(method);
                 }
@@ -380,7 +373,6 @@ public class PersistentCollectionSerializer extends ContainerSerializer<Object> 
                 }
                 final Object idValue = init.getIdentifier();
                 try {
-                    logger.debug("entity name:{}", init.getEntityName());
                     final Object obj = Class.forName(init.getEntityName()).newInstance();
                     ReflectionUtil.setFieldValue(obj, idName, idValue);
                     return obj;
