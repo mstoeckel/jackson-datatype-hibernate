@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatVisitorWrappe
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.ContextualSerializer;
 import com.fasterxml.jackson.databind.ser.impl.PropertySerializerMap;
-import com.google.common.collect.ImmutableMap;
 
 /**
  * Serializer to use for values proxied using
@@ -180,7 +179,7 @@ public class HibernateProxySerializer extends JsonSerializer<HibernateProxy> imp
                 try {
                     logger.debug("entity name:{}", init.getEntityName());
                     final Object obj = Class.forName(init.getEntityName()).newInstance();
-                    setFieldValue(obj, idName, idValue);
+                    ReflectionUtil.setFieldValue(obj, idName, idValue);
                     return obj;
                 } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | SecurityException e) {
                     logger.error("Unable to find proxied", e);
@@ -191,28 +190,6 @@ public class HibernateProxySerializer extends JsonSerializer<HibernateProxy> imp
             return null;
         }
         return init.getImplementation();
-    }
-
-    private void setFieldValue(Object obj, String fieldName, Object value) throws IllegalArgumentException, IllegalAccessException {
-        Field field = findField(obj.getClass(), fieldName);
-        if (field != null) {
-            boolean accessible = field.isAccessible();
-            field.setAccessible(true);
-            field.set(obj, value);
-            field.setAccessible(accessible);
-        }
-    }
-
-    private Field findField(Class<?> cls, String fieldName) {
-        if (cls == null) {
-            return null;
-        }
-        for (Field field : cls.getDeclaredFields()) {
-            if (field.getName().equals(fieldName)) {
-                return field;
-            }
-        }
-        return findField(cls.getSuperclass(), fieldName);
     }
 
     /**
